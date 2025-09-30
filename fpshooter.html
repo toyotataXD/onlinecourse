@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist FPS Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #222; }
+        canvas { display: block; }
+        #score { position: absolute; top: 10px; left: 10px; color: white; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div id="score">Skor: 0</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let player = { x: canvas.width / 2, y: canvas.height / 2, size: 10 };
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+
+        function spawnEnemy() {
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height / 3; // Üst tarafta belirsin
+            enemies.push({ x, y, size: 15, speed: 1 });
+        }
+
+        window.addEventListener("mousemove", (event) => {
+            player.x = event.clientX;
+            player.y = event.clientY;
+        });
+
+        window.addEventListener("click", () => {
+            bullets.push({ x: player.x, y: player.y, speed: 5 });
+        });
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Oyuncuyu çiz
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Mermileri hareket ettir
+            ctx.fillStyle = "yellow";
+            bullets.forEach((bullet, index) => {
+                bullet.y -= bullet.speed;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                if (bullet.y < 0) bullets.splice(index, 1);
+            });
+
+            // Düşmanları hareket ettir ve çarpışma kontrolü
+            ctx.fillStyle = "blue";
+            enemies.forEach((enemy, enemyIndex) => {
+                enemy.y += enemy.speed;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Çarpışma kontrolü
+                bullets.forEach((bullet, bulletIndex) => {
+                    let dx = bullet.x - enemy.x;
+                    let dy = bullet.y - enemy.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < enemy.size) {
+                        bullets.splice(bulletIndex, 1);
+                        enemies.splice(enemyIndex, 1);
+                        score++;
+                        document.getElementById("score").innerText = "Skor: " + score;
+                    }
+                });
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        setInterval(spawnEnemy, 2000); // Her 2 saniyede bir düşman ekle
+        update();
+    </script>
+</body>
+</html>
